@@ -1,0 +1,251 @@
+
+CS 440 - Homework 1: SQL (Joins, Aggregations, Set Operators)
+(100 Points)
+Spring 2024
+
+Due on: 2/1/2024 at 11:59 pm 
+This assignment is to be completed by individuals. 
+There will be a 10% penalty if the homework is submitted 24 hours after the due date, a 20% penalty if the homework is submitted 48 hours after the due date, or a 30% penalty if the homework is submitted 72 hours after the due date. The homework will not be accepted after 72 hours, as a solution will be posted by then.
+
+Submission Instructions: 
+For Question 1 to Question 10 about SQL, you will submit a Python file for all SQL queries to Gradescope. Your submission will be autograded. The TA will announce instructions in Ed. Submission will open after that.
+
+For Question 11 to Question 19 about relational algebra, you will submit a PDF to Gradescope. This part of the homework is manually graded.
+
+For Question 1 to Question 10, Submit your answers using the hw1.py skeleton file included with this assignment. 
+The python file is read by the autograder. It is important to have a syntax-error free file. Your query result should have the same attributes(columns) exactly in the same order as the expected result shown in each question. However, the rows can be in any order unless a specific order is required by the question. Column headers can be different. Before submitting your Python file, execute the file using the command: Python3 hw1.py The output should contain all of your queries. Getting the correct output ensures that the autograder will be able to read your queries.
+
+The homework will be submitted in Gradescope. Make sure you submit the correct file (hw1.py). The Homework 1 lead TA will announce in Ed when the Gradescope submission is open. Meanwhile, you can test your queries using the database included with this homework.
+
+Database instructions:
+For this assignment, use medical.db SQLite database included with this assignment. You can open the database by simply typing .open medical.db in the SQLite shell. For a readable layout in SQLite shell, run the commands 
+.mode column 
+.headers on
+
+Grading:
+This assignment will be auto-graded using SQLite in Gradescope. You are highly encouraged to use SQLite shell to test your queries before submitting your assignment. Grading will use a different database instance than the one given to students to test their queries. Therefore, make sure your queries are robust and that they work on any data instance. The number of attempts (submissions to Gradescope( is unlimited. There is no partial credit for Questions 1 to 10.
+
+
+The database:
+-- Patients Table
+CREATE TABLE IF NOT EXISTS Patients (
+    PatientID INTEGER PRIMARY KEY,
+    FirstName TEXT NOT NULL,
+    LastName TEXT NOT NULL,
+    Age INTEGER,
+    StreetAddress TEXT,
+    City TEXT,
+    ZipCode TEXT
+);
+
+-- Doctors Table
+CREATE TABLE IF NOT EXISTS Doctors (
+    DoctorID INTEGER PRIMARY KEY,
+    FirstName TEXT NOT NULL,
+    LastName TEXT NOT NULL,
+    Age INTEGER,
+    Specialty TEXT,
+    StreetAddress TEXT,
+    City TEXT,
+    ZipCode TEXT
+);
+
+
+-- Appointments Table
+CREATE TABLE IF NOT EXISTS Appointments (
+    AppointmentID INTEGER PRIMARY KEY,
+    PatientID INTEGER,
+    DoctorID INTEGER,
+    AppointmentDateTime TEXT NOT NULL,
+    Reason TEXT,
+    Diagnosis TEXT,
+    FOREIGN KEY (PatientID) REFERENCES Patients(PatientID),
+    FOREIGN KEY (DoctorID) REFERENCES Doctors(DoctorID)
+);
+
+
+-- Vitals Table
+CREATE TABLE IF NOT EXISTS Vitals (
+    RecordID INTEGER PRIMARY KEY,
+    AppointmentID INTEGER,
+    DateTime TEXT NOT NULL,
+    BloodPressureHigh INTEGER,
+    BloodPressureLow INTEGER,
+    OxygenLevel INTEGER,
+    Temperature REAL,
+    FOREIGN KEY (AppointmentID) REFERENCES Appointments(AppointmentID)
+);
+
+
+-- Prescriptions Table
+CREATE TABLE IF NOT EXISTS Prescriptions (
+    AppointmentID INTEGER,
+    DrugID INTEGER,
+    Dosage TEXT,
+    Duration TEXT,
+    Price REAL,
+    PRIMARY KEY (AppointmentID, DrugID),
+    FOREIGN KEY (AppointmentID) REFERENCES Appointments(AppointmentID),
+    FOREIGN KEY (DrugID) REFERENCES Drugs(ID)
+);
+
+
+-- Drugs Table
+CREATE TABLE IF NOT EXISTS Drugs (
+    ID INTEGER PRIMARY KEY,
+    Name TEXT NOT NULL
+);
+
+
+Set operators: Note that SQL questions (Q1 to Q10) may require set operators that have not been covered in the lab yet. Take a look at set operators supported by SQLite using these links:
+https://www.sqlitetutorial.net/sqlite-union/
+https://www.sqlitetutorial.net/sqlite-except/
+https://www.sqlitetutorial.net/sqlite-intersect/
+
+
+==========================================
+1) (5 points) Join all tables and list the measured temperatures and Prescribed drugs in all appointments. 
+
+Expected Output:
+PatientName    DoctorName      vital_time        Temperature  drug_name        Dosage
+-------------  --------------  ----------------  -----------  ---------------  -----------------
+Jane Smith     Alice Wilson    2024-01-15 10:45  99.1         Ibuprofen        50mg
+Jane Smith     Linda Taylor    2024-01-20 09:00  98.7         Ibuprofen        5ml
+Michael Brown  David Anderson  2024-01-25 10:45  100.2        Cortisone Cream  Apply twice daily
+Michael Brown  David Anderson  2024-01-25 14:15  98.5         Cortisone Cream  Apply twice daily
+Jane Smith     Alice Wilson    2024-01-15 10:45  99.1         Amoxicillin      10mg
+
+=====================================================================
+2)(5 points) The previous result misses some data, such as patients/doctors with no appointments and drugs that have never been prescribed. Modify the query to include the missing data.
+
+
+Expected Output (note that empty cells contain Null values)
+PatientName    DoctorName       vital_time        Temperature  drug_name        Dosage
+-------------  ---------------  ----------------  -----------  ---------------  -----------------
+John Doe       Alice Wilson     2024-01-10 09:15  98.6
+Jane Smith     Alice Wilson     2024-01-15 10:45  99.1         Ibuprofen        50mg
+Jane Smith     Alice Wilson     2024-01-15 10:45  99.1         Amoxicillin      10mg
+Jane Smith     Linda Taylor     2024-01-20 09:00  98.7         Ibuprofen        5ml
+Emily Johnson
+Michael Brown  David Anderson   2024-01-25 10:45  100.2        Cortisone Cream  Apply twice daily
+Michael Brown  David Anderson   2024-01-25 14:15  98.5         Cortisone Cream  Apply twice daily
+Michael Brown  Linda Taylor                                    Amoxicillin      100mg
+Sarah Davis
+               Robert Miller
+               Jennifer Harris
+                                                               Vaccine A
+                                                               Loratadine
+
+===========================================================
+3) (5 points) Modify the previous query to remove doctors with no appointments and drugs with no prescriptions. Keep all patients regardless if they have appointments or not.
+
+Expected Output:
+PatientName    DoctorName      vital_time        Temperature  drug_name        Dosage
+-------------  --------------  ----------------  -----------  ---------------  -----------------
+John Doe       Alice Wilson    2024-01-10 09:15  98.6
+Jane Smith     Alice Wilson    2024-01-15 10:45  99.1         Ibuprofen        50mg
+Jane Smith     Alice Wilson    2024-01-15 10:45  99.1         Amoxicillin      10mg
+Jane Smith     Linda Taylor    2024-01-20 09:00  98.7         Ibuprofen        5ml
+Emily Johnson
+Michael Brown  Linda Taylor                                   Amoxicillin      100mg
+Michael Brown  David Anderson  2024-01-25 10:45  100.2        Cortisone Cream  Apply twice daily
+Michael Brown  David Anderson  2024-01-25 14:15  98.5         Cortisone Cream  Apply twice daily
+Sarah Davis
+
+=======================================
+4) (5 points) Find pairs of patients living in the same city.
+
+Patient1       Patient2       City
+-------------  -------------  -----------
+John Doe       Jane Smith     Springfield
+Emily Johnson  Michael Brown  Greenfield
+
+======================================
+5) (5 points) Find an appointment with a doctor and patient pair having the same age. 
+
+Expected Output:
+Patient   Doctor        Age  AppointmentDateTime
+--------  ------------  ---  -------------------
+John Doe  Alice Wilson  42   2024-01-10 09:00
+
+===============================================
+
+6) (5 points) find city-zipcode pairs that have patients and no doctors.
+
+Expected Output:
+City       ZipCode
+---------  -------
+Hillsdale  67890
+
+====================================
+7) (5 points) Count the appointments whose reason contains the word 'Checkup'. Also, Count the appointments whose diagnosis contains the word 'Healthy'. Note that you can add a string as a column like in the expect result below (e.g., Select GPA, 'Out of 4.0' as a description ...)
+
+Expected Output:
+appointment_type      appointments_count
+--------------------  ------------------
+diagonsis is Healthy  3
+reason is Checkup     2
+
+============================
+8) (5 points) For every patient living in Springfield, display the count of temperature records and the count of those records. Keep only patients with two or more temperature records.
+
+Expected Output:
+PatientName  avg_temp  temp_count
+-----------  --------  ----------
+Jane Smith   98.9      2
+
+==================================
+9) (5 points) Find any appointment where the doctor has prescribed both 'Ibuprofen' and 'Amoxicillin'. List the appointment id, the patient name, and the doctor name.
+
+Expected Output:
+AppointmentID  PatientName  DoctorName
+-------------  -----------  ------------
+112            Jane Smith   Alice Wilson
+
+=======================================
+10) (5 points) For each Specialty, count the number of doctors, the number of patients seen by the specialty doctors, and the number of drugs prescribed by the specialty doctors. 
+
+Expected Output:
+Specialty         number_doctors  number_patients  number_drugs
+----------------  --------------  ---------------  ------------
+Cardiology        1               2                2
+General Practice  2               0                0
+Pediatrics        2               3                3
+
+============================================================================
+======================== PART 2 ============================================
+================ Relational Algebra ========================================
+
+For Questions 11 to 19, submit a PDF file to Gradescope. You are highly encouraged to use LATEX to type your Relational Algebra expressions. A template file is included with this assignment. Overleaf is a popular LATEX editor that is available for free for Purdue students: https://www.overleaf.com/edu/purdue
+
+11) (5 points) Redo Question 1 using relational algebra. Use theta join (do not use natural join and cross product). Keep only rows where the drug name is 'Cortisone Cream'
+
+12) (5 points) Redo Question 11 using cross product (do not use theta join and natural join).
+
+13) (5 points) Redo Question 11 using natural join (do not use theta join and cross product).  
+
+14) (5 points) Redo Question 4 using relational algebra.
+
+15) (5 points) List the ID, first name, and last name for patients with no appointments.
+
+16) (5 points) List the ids and last names of patients who have had both 'Ibuprofen' and 'Amoxicillin' prescriptions. For those patients, include all of their temperature readings.
+
+17) (5 points) Redo Question 6.
+
+18) (5 points) Find doctor and patient pairs where the doctor has no appointments with the patients. List PatientID and DoctorID. 
+Hint: a cross product is needed in this query.
+
+19) (10 points) Suppose relations R(A B) and S(A C) have n tuples and m tuples, respectively,
+where n > 0 and m > 0. R.A is a key and S.A is a foreign key to R.A. Find the 
+minimum and maximum numbers of tuples that the following expressions can have. You can use numbers (e.g., 0, 1, 2,..) and/or expressions/functions using the variables n and m (e.g., n, m, n+m, max(n, m), min(n, m), ... etc.).  
+
+a) (0 points, solution is provided) 
+(Project_{A} R) Intersect (Project_{A} S)
+Solution: 
+minimum = 1 or m, the minimum case happens when there is one row in S.
+maximum = n. The maximum case happens when all R.A values exist in S.A
+
+b) (2.5 points) R Natural Join S
+c) (2.5 points) R LEFT OUTER Join S ON R.A = S.A
+d) (2.5 points) R RIGHT OUTER Join S ON R.A = S.A
+e) (2.5 points) R * S (Cross Product)
