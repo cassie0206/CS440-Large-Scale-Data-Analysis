@@ -1,0 +1,195 @@
+
+CS 440 - Homework 2-part 1: SQL (Subqueries, Correlated Subqueries)
+(100 Points)
+Spring 2024
+
+Due on: 2/12/2024 at 11:59 pm 
+This assignment is to be completed by individuals. 
+There will be a 10% penalty if the homework is submitted 24 hours after the due date, a 20% penalty if the homework is submitted 48 hours after the due date, or a 30% penalty if the homework is submitted 72 hours after the due date. The homework will not be accepted after 72 hours, as a solution will be posted by then.
+
+Submission Instructions: 
+For Question 1 to Question 10 about SQL, you will submit a Python file for all SQL queries to Gradescope. Your submission will be autograded. The TA will announce instructions in Ed. Submission will open after that.
+
+For Question 1 to Question 10, Submit your answers using the hw2.py skeleton file included with this assignment. 
+The python file is read by the autograder. It is important to have a syntax-error free file. Your query result should have the same attributes(columns) exactly in the same order as the expected result shown in each question. However, the rows can be in any order unless a specific order is required by the question. Column headers can be different. Before submitting your Python file, execute the file using the command: Python3 hw1.py The output should contain all of your queries. Getting the correct output ensures that the autograder will be able to read your queries.
+
+The homework will be submitted in Gradescope. Make sure you submit the correct file (hw2.py). The Homework 1 lead TA will announce in Ed when the Gradescope submission is open. Meanwhile, you can test your queries using the database included with this homework.
+
+Database instructions:
+For this assignment, use medical.db SQLite database included with Homework 1. You can open the database by simply typing .open medical.db in the SQLite shell. For a readable layout in SQLite shell, run the commands 
+.mode column 
+.headers on
+
+Grading:
+This assignment will be auto-graded using SQLite in Gradescope. You are highly encouraged to use SQLite shell to test your queries before submitting your assignment. Grading will use a different database instance than the one given to students to test their queries. Therefore, make sure your queries are robust and that they work on any data instance. The number of attempts (submissions to Gradescope( is unlimited. There is no partial credit for Questions 1 to 10.
+
+
+The database:
+-- Patients Table
+CREATE TABLE IF NOT EXISTS Patients (
+    PatientID INTEGER PRIMARY KEY,
+    FirstName TEXT NOT NULL,
+    LastName TEXT NOT NULL,
+    Age INTEGER,
+    StreetAddress TEXT,
+    City TEXT,
+    ZipCode TEXT
+);
+
+-- Doctors Table
+CREATE TABLE IF NOT EXISTS Doctors (
+    DoctorID INTEGER PRIMARY KEY,
+    FirstName TEXT NOT NULL,
+    LastName TEXT NOT NULL,
+    Age INTEGER,
+    Specialty TEXT,
+    StreetAddress TEXT,
+    City TEXT,
+    ZipCode TEXT
+);
+
+
+-- Appointments Table
+CREATE TABLE IF NOT EXISTS Appointments (
+    AppointmentID INTEGER PRIMARY KEY,
+    PatientID INTEGER,
+    DoctorID INTEGER,
+    AppointmentDateTime TEXT NOT NULL,
+    Reason TEXT,
+    Diagnosis TEXT,
+    FOREIGN KEY (PatientID) REFERENCES Patients(PatientID),
+    FOREIGN KEY (DoctorID) REFERENCES Doctors(DoctorID)
+);
+
+
+-- Vitals Table
+CREATE TABLE IF NOT EXISTS Vitals (
+    RecordID INTEGER PRIMARY KEY,
+    AppointmentID INTEGER,
+    DateTime TEXT NOT NULL,
+    BloodPressureHigh INTEGER,
+    BloodPressureLow INTEGER,
+    OxygenLevel INTEGER,
+    Temperature REAL,
+    FOREIGN KEY (AppointmentID) REFERENCES Appointments(AppointmentID)
+);
+
+
+-- Prescriptions Table
+CREATE TABLE IF NOT EXISTS Prescriptions (
+    AppointmentID INTEGER,
+    DrugID INTEGER,
+    Dosage TEXT,
+    Duration TEXT,
+    Price REAL,
+    PRIMARY KEY (AppointmentID, DrugID),
+    FOREIGN KEY (AppointmentID) REFERENCES Appointments(AppointmentID),
+    FOREIGN KEY (DrugID) REFERENCES Drugs(ID)
+);
+
+
+-- Drugs Table
+CREATE TABLE IF NOT EXISTS Drugs (
+    ID INTEGER PRIMARY KEY,
+    Name TEXT NOT NULL
+);
+
+=================================================================
+1) List the first name, last name, and temperature for patient(s) with the highest temperature reading. Discard duplicate rows if a patient has the highest temperature multiple times.
+
+Expected Output:
+FirstName  LastName  Temperature
+---------  --------  -----------
+Michael    Brown     100.2
+
+==================================================================
+2) Find the maximum temperature in each day. List the patients who had those maximum temperatures. discard any duplicate rows.
+
+Expected Output:
+FirstName  LastName  Temperature  date
+---------  --------  -----------  ----------
+John       Doe       98.6         2024-01-10
+Jane       Smith     99.1         2024-01-15
+Jane       Smith     98.7         2024-01-20
+Michael    Brown     100.2        2024-01-25
+
+=========================================================
+3) Find the average of all temperature readings for patients in each city. Keep the city with the highest average. Include the count of temperature readings.
+
+Expected Output:
+City        avg_temp  temp_count
+----------  --------  ----------
+Greenfield  99.35     2
+
+==================================================================
+4) Find the highest and the second highest age in the patients table. List patient(s) having one of those two ages. Note that the result may contain 3 or more patients if multiple people have the same age.
+
+Expected Output:
+PatientID  FirstName  LastName  Age  StreetAddress  City         ZipCode
+---------  ---------  --------  ---  -------------  -----------  -------
+1          John       Doe       42   123 Maple St   Springfield  12345
+3          Emily      Johnson   47   789 Pine Blvd  Greenfield   54321
+
+====================================================================
+5) For each city C, find the oldest patients in C (i.e., patients having the highest age in the city).
+
+Expected Output:
+PatientID  FirstName  LastName  Age  StreetAddress  City         ZipCode
+---------  ---------  --------  ---  -------------  -----------  -------
+1          John       Doe       42   123 Maple St   Springfield  12345
+3          Emily      Johnson   47   789 Pine Blvd  Greenfield   54321
+5          Sarah      Davis     27   654 Elm St     Hillsdale    67890
+
+====================================================================
+6) List both the drugs with the lowest number of prescriptions and the drugs with highest number of prescriptions.
+
+Expected Output:
+ID    Name         prescription_count  description
+----  -----------  ------------------  -----------------------
+1001  Ibuprofen    2                   highest prescribed drug
+1002  Vaccine A    0                   lowest prescribed drug
+1004  Amoxicillin  2                   highest prescribed drug
+1005  Loratadine   0                   lowest prescribed drug
+
+===================================================================
+7) List all patients\'' temperature readings. Include a column that shows the overall average temperature.
+
+Expected Output:
+PatientName    DoctorName      vital_time        Temperature  avg_temp
+-------------  --------------  ----------------  -----------  --------
+John Doe       Alice Wilson    2024-01-10 09:15  98.6         99.02
+Jane Smith     Alice Wilson    2024-01-15 10:45  99.1         99.02
+Jane Smith     Linda Taylor    2024-01-20 09:00  98.7         99.02
+Michael Brown  David Anderson  2024-01-25 10:45  100.2        99.02
+Michael Brown  David Anderson  2024-01-25 14:15  98.5         99.02
+
+=================================================================
+8) Modify the query in the previous question to show the highest temperature for the patient in each row.
+
+Expected Output:
+PatientName    DoctorName      vital_time        Temperature  patient_high
+-------------  --------------  ----------------  -----------  ------------
+John Doe       Alice Wilson    2024-01-10 09:15  98.6         98.6
+Jane Smith     Alice Wilson    2024-01-15 10:45  99.1         99.1
+Jane Smith     Linda Taylor    2024-01-20 09:00  98.7         99.1
+Michael Brown  David Anderson  2024-01-25 10:45  100.2        100.2
+Michael Brown  David Anderson  2024-01-25 14:15  98.5         100.2
+
+=================================================
+9) Find specialities with the same number of doctors.
+
+Expected Output:
+specialty         doctor_count  specialty   doctor_count
+----------------  ------------  ----------  ------------
+General Practice  2             Pediatrics  2
+
+=============================================
+10) Find the number of doctors and the number of patients in each city. Also, for each city C, count the number of appointments involving a doctor and a patient who are both from C.
+
+Expected Output:
+city         doctor_count  patient_count  appointment_count
+-----------  ------------  -------------  -----------------
+Greenfield   1             2              1
+Hillsdale                  1
+Riverdale    2
+Springfield  2             2              2
