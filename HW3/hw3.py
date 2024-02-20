@@ -81,10 +81,42 @@ def query5():
 
 def query6():
 	return """
-	
+	select 
+	sum(
+	case
+		when security_clearance = 1 then 1
+		else 0
+		end
+	) as low_clearance,
+	sum(
+	case
+		when security_clearance = 2 then 1
+		else 0
+		end
+	) as moderate_clearance,
+	sum(
+	case
+		when security_clearance = 3 then 1
+		else 0
+		end
+	) as high_clearance,
+	sum(
+	case
+		when security_clearance = 4 then 1
+		else 0
+		end
+	) as very_high_clearance,
+	sum(
+	case
+		when security_clearance = 5 then 1
+		else 0
+		end
+	) as top_secret_clearance
+	from company_info;
 	"""
 
 def query7():
+	#TODO:practice!!
 	return """
 	with temp as (
 	select employee_id,
@@ -96,18 +128,37 @@ def query7():
 	from employee
 	)
 	select distinct age_group as 'Age Group', Gender, 
-	count(gender) over (partition by age_group order by gender) as 'Num Employees'
+	count(employee_id) over (partition by age_group, gender) as 'Num Employees'
 	from employee natural join temp;
 	"""
 
 def query8():
-	return "8"
+	return """
+	select first_name, last_name,
+	json_extract(employee.extra, '$.email') as email
+	from employee
+	where json_extract(employee.extra, '$.email') like "%@ftc.gov";
+	"""
 
 def query9():
-	return "9"
+	#TODO: practice
+	return """
+	with temp as (
+	select distinct employee_id, count(value) over (partition by employee_id) as total
+	from employee, json_each(json_extract(extra, '$.tags'))
+	)
+	select avg(total) as avg_tags_per_employee
+	from temp;
+	"""
 
 def query10():
-	return "10"
+	#TODO: practice
+	return """
+	select count(*) as num_employees
+	from employee
+	where json_extract(employee.extra, '$.cell_phone') is not null
+	and json_extract(employee.extra, '$.home_phone') is not null;
+	"""
 
 #Do not edit below
 
